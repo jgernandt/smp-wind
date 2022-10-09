@@ -109,16 +109,16 @@ event OnPageReset(string name)
 		
 		SetCursorFillMode(TOP_TO_BOTTOM)
 		
-		ids[GLOBALFORCE] = AddSliderOption("Force scale", values[GLOBALFORCE], formats[GLOBALFORCE])
-		ids[HEIGHTFACTOR] = AddSliderOption("Height factor", values[HEIGHTFACTOR], formats[HEIGHTFACTOR])
+		ids[GLOBALFORCE] = AddSliderOption("Intensity", values[GLOBALFORCE], formats[GLOBALFORCE])
+		ids[HEIGHTFACTOR] = AddSliderOption("Altitude factor", values[HEIGHTFACTOR], formats[HEIGHTFACTOR])
 		ids[NOISEFORCE] = AddSliderOption("Noise", values[NOISEFORCE], formats[NOISEFORCE])
 		
 		AddHeaderOption("Intensity fluctuation")
-		ids[OSC01FORCE] = AddSliderOption("Amplitude", values[OSC01FORCE], formats[OSC01FORCE])
+		ids[OSC01FORCE] = AddSliderOption("Magnitude", values[OSC01FORCE], formats[OSC01FORCE])
 		ids[OSC01FREQ] = AddSliderOption("Frequency", values[OSC01FREQ], formats[OSC01FREQ])
 		
 		AddHeaderOption("Directional fluctuation")
-		ids[OSC02FORCE] = AddSliderOption("Amplitude", values[OSC02FORCE], formats[OSC02FORCE])
+		ids[OSC02FORCE] = AddSliderOption("Magnitude", values[OSC02FORCE], formats[OSC02FORCE])
 		ids[OSC02FREQ] = AddSliderOption("Frequency", values[OSC02FREQ], formats[OSC02FREQ])
 		ids[OSC02SPAN] = AddSliderOption("Span", values[OSC02SPAN], formats[OSC02SPAN])
 		
