@@ -7,7 +7,7 @@
 namespace wind
 {
 	constexpr unsigned long VERSION_MAJOR{ 1 };
-	constexpr unsigned long VERSION_MINOR{ 0 };
+	constexpr unsigned long VERSION_MINOR{ 1 };
 	constexpr unsigned long VERSION_PATCH{ 0 };
 	constexpr unsigned long pluginVersion = (VERSION_MAJOR & 0xFF) << 24 | (VERSION_MINOR & 0xFF) << 16 | (VERSION_PATCH & 0xFF) << 8;
 
@@ -21,7 +21,7 @@ namespace wind
 	void smpCallback(SKSEMessagingInterface::Message* msg)
 	{
 		if (msg && msg->type == hdt::PluginInterface::MESSAGE_STARTUP && msg->data) {
-			_MESSAGE("HDT-SMP startup message received.\n");
+			_MESSAGE("Connection established.\n");
 
 			//Load config file
 			PWSTR wpath;
@@ -30,18 +30,25 @@ namespace wind
 				std::filesystem::path documents(wpath, std::filesystem::path::native_format);
 				std::filesystem::path configPath(documents / "My Games\\Skyrim Special Edition\\SKSE\\SMP Wind.ini");
 
-				_MESSAGE("Loading config file %s", configPath.string().c_str());
+				_MESSAGE("Loading config file %s...", configPath.string().c_str());
 
-				g_config.load(configPath);
+				if (g_config.load(configPath)) {
+					_MESSAGE("Config file loaded.\n");
+				}
+				else {
+					_WARNING("Failed to load config file. Settings will not be saved.\n");
+				}
 			}
 			else {
-				_WARNING("Documents folder not found. Settings will not be saved.");
+				_WARNING("Documents folder not found. Settings will not be saved.\n");
 			}
 
 			g_wind.init(g_config);
 
 			auto smp = reinterpret_cast<hdt::PluginInterface*>(msg->data);
 			smp->addListener(&g_wind);
+
+			_MESSAGE("Initialisation complete.\n");
 		}
 	}
 
@@ -87,15 +94,15 @@ extern "C" {
 
 		unsigned int runtime = skse->runtimeVersion;
 
-		_MESSAGE("Plugin version %d.%d.%d", wind::VERSION_MAJOR, wind::VERSION_MINOR, wind::VERSION_PATCH);
-		_MESSAGE("Runtime version %d.%d.%d",
+		_MESSAGE("Game version %d.%d.%d",
 			GET_EXE_VERSION_MAJOR(runtime),
 			GET_EXE_VERSION_MINOR(runtime),
 			GET_EXE_VERSION_BUILD(runtime));
-		_MESSAGE("SKSE version %d.%d.%d\n",
+		_MESSAGE("SKSE version %d.%d.%d",
 			GET_EXE_VERSION_MAJOR(skse->skseVersion),
 			GET_EXE_VERSION_MINOR(skse->skseVersion),
 			GET_EXE_VERSION_BUILD(skse->skseVersion));
+		_MESSAGE("Plugin version %d.%d.%d-640\n", wind::VERSION_MAJOR, wind::VERSION_MINOR, wind::VERSION_PATCH);
 
 		wind::g_pluginHandle = skse->GetPluginHandle();
 

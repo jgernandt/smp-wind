@@ -14,6 +14,19 @@ bool wind::registerFunctions(VMClassRegistry* vmcr)
 	assert(vmcr);
 
 	vmcr->RegisterFunction(new NativeFunction1<StaticFunctionTag,
+		bool,
+		SInt32>
+		("GetBool", "JGWD_MCM", &getBool, vmcr));
+	vmcr->RegisterFunction(new NativeFunction1<StaticFunctionTag,
+		bool,
+		SInt32>
+		("GetBoolDefault", "JGWD_MCM", &getBoolDefault, vmcr));
+	vmcr->RegisterFunction(new NativeFunction2<StaticFunctionTag,
+		void,
+		SInt32, bool>
+		("SetBool", "JGWD_MCM", &setBool, vmcr));
+
+	vmcr->RegisterFunction(new NativeFunction1<StaticFunctionTag,
 		float,
 		SInt32>
 		("GetFloat", "JGWD_MCM", &getFloat, vmcr));
@@ -26,10 +39,40 @@ bool wind::registerFunctions(VMClassRegistry* vmcr)
 		SInt32, float>
 		("SetFloat", "JGWD_MCM", &setFloat, vmcr));
 
+	vmcr->SetFunctionFlags("JGWD_MCM", "GetBool", VMClassRegistry::kFunctionFlag_NoWait);
+	vmcr->SetFunctionFlags("JGWD_MCM", "GetBoolDefault", VMClassRegistry::kFunctionFlag_NoWait);
+
 	vmcr->SetFunctionFlags("JGWD_MCM", "GetFloat", VMClassRegistry::kFunctionFlag_NoWait);
 	vmcr->SetFunctionFlags("JGWD_MCM", "GetFloatDefault", VMClassRegistry::kFunctionFlag_NoWait);
 
 	return true;
+}
+
+bool wind::getBool(StaticFunctionTag*, SInt32 id)
+{
+	if (id >= 0 && id < Config::BOOL_COUNT) {
+		return g_config.getb(id);
+	}
+	else {
+		return false;
+	}
+}
+
+bool wind::getBoolDefault(StaticFunctionTag*, SInt32 id)
+{
+	if (id >= 0 && id < Config::BOOL_COUNT) {
+		return g_configDefault.getb(id);
+	}
+	else {
+		return false;
+	}
+}
+
+void wind::setBool(StaticFunctionTag*, SInt32 id, bool b)
+{
+	if (id >= 0 && id < Config::BOOL_COUNT) {
+		g_config.set(id, b);
+	}
 }
 
 float wind::getFloat(StaticFunctionTag*, SInt32 id)

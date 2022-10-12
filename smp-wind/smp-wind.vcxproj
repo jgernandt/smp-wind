@@ -159,7 +159,6 @@
     <ClInclude Include="papyrus.h" />
     <ClInclude Include="pch.h" />
     <ClInclude Include="Timer.h" />
-    <ClInclude Include="versionlibdb.h" />
     <ClInclude Include="Wind.h" />
   </ItemGroup>
   <ItemGroup>

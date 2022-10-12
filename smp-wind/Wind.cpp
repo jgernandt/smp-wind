@@ -13,13 +13,8 @@ void wind::Wind::onEvent(const hdt::PreStepEvent& e)
 	//Timer<long long, std::micro> timer;
 
 	m_currentTime += e.timeStep;
-	//We'll lose time resolution if the game runs for several hours (possible!).
-	//Better to reset the clock, even if that means stuttering. Once per hour is acceptable.
-	if (m_currentTime > 3600.0f) {
-		m_currentTime = 0.0f;
-	}
 
-	assert(m_sky);
+	assert(m_sky && m_config);
 
 	if (e.world && m_sky->mode == Sky::kFull && m_sky->windSpeed != 0.0f) {
 
@@ -30,9 +25,16 @@ void wind::Wind::onEvent(const hdt::PreStepEvent& e)
 		for (int i = 0; i < bodies.size(); i++) {
 			btRigidBody* body = btRigidBody::upcast(bodies[i]);
 			if (body && !body->isStaticOrKinematicObject()) {
-				body->applyCentralForce(eval(body->getWorldTransform().getOrigin()));
+				//scale by 100 * m, since that's the oom we adapted the wind for
+				float rescale = m_config->getb(Config::MASS_INDEPENDENT) ? 100.0f * body->getMass() : 1.0f;
+				body->applyCentralForce(rescale * eval(body->getWorldTransform().getOrigin()));
 			}
 		}
+	}
+	else {
+		//We'll lose time resolution if the game runs for several hours (possible!).
+		//To prevent this, reset the clock when the player is indoors.
+		m_currentTime = 0.0f;
 	}
 
 	//average = 0.75f * average + 0.25f * timer.elapsed();
