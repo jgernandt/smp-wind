@@ -20,7 +20,25 @@ namespace wind
 
 	void smpCallback(SKSEMessagingInterface::Message* msg)
 	{
-		if (msg && msg->type == hdt::PluginInterface::MESSAGE_STARTUP && msg->data) {
+		if (msg && msg->type == hdt::PluginInterface::MSG_STARTUP && msg->data) {
+
+			auto smp = reinterpret_cast<hdt::PluginInterface*>(msg->data);
+
+			auto&& info = smp->getVersionInfo();
+			if (info.interfaceVersion.major != hdt::PluginInterface::INTERFACE_VERSION.major ||
+				info.interfaceVersion.minor < hdt::PluginInterface::INTERFACE_VERSION.minor)
+			{
+				_ERROR("Incompatible HDT-SMP interface.");
+				return;
+			}
+
+			if (info.bulletVersion.major != hdt::PluginInterface::BULLET_VERSION.major ||
+				info.bulletVersion.minor < hdt::PluginInterface::BULLET_VERSION.minor)
+			{
+				_ERROR("Incompatible Bullet version.");
+				return;
+			}
+
 			_MESSAGE("Connection established.\n");
 
 			//Load config file
@@ -45,7 +63,6 @@ namespace wind
 
 			g_wind.init(g_config);
 
-			auto smp = reinterpret_cast<hdt::PluginInterface*>(msg->data);
 			smp->addListener(&g_wind);
 
 			_MESSAGE("Initialisation complete.\n");
