@@ -158,6 +158,7 @@
     <ClInclude Include="Config.h" />
     <ClInclude Include="papyrus.h" />
     <ClInclude Include="pch.h" />
+    <ClInclude Include="PluginHelper.h" />
     <ClInclude Include="Timer.h" />
     <ClInclude Include="Wind.h" />
   </ItemGroup>
