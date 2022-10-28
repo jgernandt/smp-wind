@@ -62,8 +62,8 @@ namespace hdt
 
 				auto&& info = smp->getVersionInfo();
 
-				if (info.interfaceVersion >= interfaceMin && info.interfaceVersion < interfaceMax) {
-					if (info.bulletVersion >= bulletMin && info.bulletVersion < bulletMax) {
+				if (info.interfaceVersion >= T::interfaceMin && info.interfaceVersion < T::interfaceMax) {
+					if (info.bulletVersion >= T::bulletMin && info.bulletVersion < T::bulletMax) {
 						_MESSAGE("Connection established.\n");
 						T::onConnect(smp);
 					}
