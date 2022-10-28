@@ -1,12 +1,16 @@
 #ifndef PCH_H
 #define PCH_H
 
+#include <array>
+#include <atomic>
 #include <cassert>
 #include <cstdint>
 #include <cstdio>
 #include <filesystem>
 #include <map>
+#include <semaphore>
 #include <string>
+#include <thread>
 
 #include <ShlObj.h>
 #include <Windows.h>
