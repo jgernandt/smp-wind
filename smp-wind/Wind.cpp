@@ -42,8 +42,8 @@ void wind::Wind::onEvent(const hdt::PreStepEvent& e)
 		else {
 			//call the workers
 			m_objectArray = &e.objects;
-			m_arrayIndex = e.objects.size();
-			m_workerCount = WORKERS;
+			m_arrayIndex.store(e.objects.size(), std::memory_order::release);
+			m_workerCount.store(WORKERS, std::memory_order::release);
 			m_startSignal.release(WORKERS);
 			m_stopSignal.acquire();
 			m_objectArray = nullptr;
@@ -145,14 +145,14 @@ void wind::Wind::worker()
 
 		if (auto objArray = m_objectArray) {
 			//do work
-			int i = --m_arrayIndex;
+			int i = m_arrayIndex.fetch_sub(1, std::memory_order::acq_rel) - 1;
 			while (i >= 0) {
 				process((*objArray)[i]);
-				i = --m_arrayIndex;
+				i = m_arrayIndex.fetch_sub(1, std::memory_order::acq_rel) - 1;
 			}
 
 			//done
-			if (--m_workerCount == 0) {
+			if (m_workerCount.fetch_sub(1, std::memory_order::acq_rel) == 1) {
 				//we're the last to finish
 				m_stopSignal.release();
 			}
