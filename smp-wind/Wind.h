@@ -49,17 +49,25 @@ static_assert(offsetof(Sky, mode) == 0x1bc);
 
 namespace wind
 {
+	constexpr int WORKERS = 8;
+
 	class Config;
 
 	class Wind final : public hdt::IPreStepListener
 	{
 	public:
+		Wind() = default;
+		~Wind();
+
 		virtual void onEvent(const hdt::PreStepEvent& e) override;
 
 		void init(const Config& config);
+		void shutdown();
 
 	private:
 		btVector3 eval(const btVector3& at);
+		void process(btCollisionObject* object);
+		void worker();
 
 	private:
 		const Sky* m_sky{ nullptr };
@@ -68,5 +76,12 @@ namespace wind
 		float m_currentTime{ 0.0f };
 		btVector3 m_currentDir;
 		btVector3 m_orthoDir;
+
+		std::array<std::thread, WORKERS> m_workers;
+		std::counting_semaphore<WORKERS> m_startSignal{ 0 };
+		std::binary_semaphore m_stopSignal{ 0 };
+		std::atomic<int> m_workerCount{ -1 };
+		std::atomic<int> m_arrayIndex{ -1 };
+		const btAlignedObjectArray<btCollisionObject*>* m_objectArray{ nullptr };
 	};
 }

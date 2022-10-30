@@ -3,8 +3,9 @@
 #include "PluginHelper.h"
 
 #include "Config.h"
-#include "papyrus.h"
 #include "Wind.h"
+
+class VMClassRegistry;
 
 namespace wind
 {
@@ -16,6 +17,8 @@ namespace wind
 	Config g_config;
 	Config g_configDefault;
 	Wind g_wind;
+
+	bool registerFunctions(VMClassRegistry* vcr);
 }
 
 class MyHelper

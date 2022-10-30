@@ -1,12 +1,16 @@
 #ifndef PCH_H
 #define PCH_H
 
+#include <array>
+#include <atomic>
 #include <cassert>
 #include <cstdint>
 #include <cstdio>
 #include <filesystem>
 #include <map>
+#include <semaphore>
 #include <string>
+#include <thread>
 
 #include <ShlObj.h>
 #include <Windows.h>
@@ -23,6 +27,7 @@
 #include "skse64/PapyrusVM.h"
 #include "skse64/PluginAPI.h"
 
+#define BT_USE_SSE_IN_API
 #include "BulletDynamics/Dynamics/btDynamicsWorld.h"
 #include "BulletDynamics/Dynamics/btRigidBody.h"
 
