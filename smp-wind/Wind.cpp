@@ -3,8 +3,6 @@
 #include "Timer.h"
 #include "Wind.h"
 
-#define LOG_TIMER
-
 RelocAddr<Sky* (*)()> GetSky(0x00183530);
 
 wind::Wind::~Wind()
