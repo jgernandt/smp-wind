@@ -16,14 +16,14 @@ void wind::Wind::onEvent(const hdt::PreStepEvent& e)
 
 	assert(m_sky && m_config);
 
-	if (e.world && m_sky->mode == Sky::kFull && m_sky->windSpeed != 0.0f) {
+	if (m_sky->mode == Sky::kFull && m_sky->windSpeed != 0.0f) {
 
 		m_currentDir = btVector3(std::cosf(m_sky->windDirection), std::sinf(m_sky->windDirection), 0.0f);
 		m_orthoDir = btVector3(std::cosf(m_sky->windDirection - 1.5708f), std::sinf(m_sky->windDirection - 1.5708f), 0.0f);
 
-		auto&& bodies = e.world->getCollisionObjectArray();
-		for (int i = 0; i < bodies.size(); i++) {
-			btRigidBody* body = btRigidBody::upcast(bodies[i]);
+		//auto&& bodies = e.world->getCollisionObjectArray();
+		for (int i = 0; i < e.objects.size(); i++) {
+			btRigidBody* body = btRigidBody::upcast(e.objects[i]);
 			if (body && !body->isStaticOrKinematicObject()) {
 				//scale by 100 * m, since that's the oom we adapted the wind for
 				float rescale = m_config->getb(Config::MASS_INDEPENDENT) ? 100.0f * body->getMass() : 1.0f;

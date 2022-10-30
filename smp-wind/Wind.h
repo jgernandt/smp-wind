@@ -51,7 +51,7 @@ namespace wind
 {
 	class Config;
 
-	class Wind final : public hdt::PreStepListener
+	class Wind final : public hdt::IPreStepListener
 	{
 	public:
 		virtual void onEvent(const hdt::PreStepEvent& e) override;

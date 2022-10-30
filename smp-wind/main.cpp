@@ -1,5 +1,7 @@
 #include "pch.h"
 
+#include "PluginHelper.h"
+
 #include "Config.h"
 #include "papyrus.h"
 #include "Wind.h"
@@ -11,59 +13,50 @@ namespace wind
 	constexpr unsigned long VERSION_PATCH{ 0 };
 	constexpr unsigned long pluginVersion = (VERSION_MAJOR & 0xFF) << 24 | (VERSION_MINOR & 0xFF) << 16 | (VERSION_PATCH & 0xFF) << 8;
 
-	PluginHandle g_pluginHandle;
-	SKSEMessagingInterface* g_skseMessagingInterface;
-
 	Config g_config;
 	Config g_configDefault;
 	Wind g_wind;
-
-	void smpCallback(SKSEMessagingInterface::Message* msg)
-	{
-		if (msg && msg->type == hdt::PluginInterface::MESSAGE_STARTUP && msg->data) {
-			_MESSAGE("Connection established.\n");
-
-			//Load config file
-			PWSTR wpath;
-			HRESULT res = SHGetKnownFolderPath(FOLDERID_Documents, 0, NULL, &wpath);
-			if (SUCCEEDED(res)) {
-				std::filesystem::path documents(wpath, std::filesystem::path::native_format);
-				std::filesystem::path configPath(documents / "My Games\\Skyrim Special Edition\\SKSE\\SMP Wind.ini");
-
-				_MESSAGE("Loading config file %s...", configPath.string().c_str());
-
-				if (g_config.load(configPath)) {
-					_MESSAGE("Config file loaded.\n");
-				}
-				else {
-					_WARNING("Failed to load config file. Settings will not be saved.\n");
-				}
-			}
-			else {
-				_WARNING("Documents folder not found. Settings will not be saved.\n");
-			}
-
-			g_wind.init(g_config);
-
-			auto smp = reinterpret_cast<hdt::PluginInterface*>(msg->data);
-			smp->addListener(&g_wind);
-
-			_MESSAGE("Initialisation complete.\n");
-		}
-	}
-
-	void skseCallback(SKSEMessagingInterface::Message* msg)
-	{
-		if (msg && msg->type == SKSEMessagingInterface::kMessage_PostLoad) {
-			if (g_skseMessagingInterface->RegisterListener(g_pluginHandle, "hdtSMP64", &smpCallback)) {
-				_MESSAGE("Connecting to HDT-SMP...");
-			}
-			else {
-				_ERROR("HDT-SMP is not loaded.");
-			}
-		}
-	}
 }
+
+class MyHelper
+{
+public:
+	inline static hdt::PluginInterface::Version interfaceMin{ 1, 0, 0 };
+	inline static hdt::PluginInterface::Version interfaceMax{ 2, 0, 0 };
+
+	inline static hdt::PluginInterface::Version bulletMin{ hdt::PluginInterface::BULLET_VERSION };
+	inline static hdt::PluginInterface::Version bulletMax{ hdt::PluginInterface::BULLET_VERSION.major + 1, 0, 0 };
+
+	static void onConnect(hdt::PluginInterface* smp)
+	{
+		PWSTR wpath;
+		HRESULT res = SHGetKnownFolderPath(FOLDERID_Documents, 0, NULL, &wpath);
+		if (SUCCEEDED(res)) {
+			std::filesystem::path documents(wpath, std::filesystem::path::native_format);
+			std::filesystem::path configPath(documents / "My Games\\Skyrim Special Edition\\SKSE\\SMP Wind.ini");
+
+			_MESSAGE("Loading config file %s...", configPath.string().c_str());
+
+			if (wind::g_config.load(configPath)) {
+				_MESSAGE("Config file loaded.\n");
+			}
+			else {
+				_WARNING("WARNING: Failed to load config file. Settings will not be saved.\n");
+			}
+		}
+		else {
+			_WARNING("WARNING: Documents folder not found. Settings will not be saved.\n");
+		}
+
+		wind::g_wind.init(wind::g_config);
+
+		smp->addListener(&wind::g_wind);
+
+		_MESSAGE("Initialisation complete.\n");
+	}
+
+	static void skseCallback(SKSEMessagingInterface::Message* msg) {}
+};
 
 extern "C" {
 
@@ -104,15 +97,8 @@ extern "C" {
 			GET_EXE_VERSION_BUILD(skse->skseVersion));
 		_MESSAGE("Plugin version %d.%d.%d-640\n", wind::VERSION_MAJOR, wind::VERSION_MINOR, wind::VERSION_PATCH);
 
-		wind::g_pluginHandle = skse->GetPluginHandle();
-
-		wind::g_skseMessagingInterface = static_cast<SKSEMessagingInterface*>(skse->QueryInterface(kInterface_Messaging));
 		auto spi = static_cast<SKSEPapyrusInterface*>(skse->QueryInterface(kInterface_Papyrus));
 
-		if (!wind::g_skseMessagingInterface) {
-			_FATALERROR("Failed to get an SKSE messaging interface. Plugin loading aborted.");
-			return false;
-		}
 		if (!spi) {
 			_FATALERROR("Failed to get an SKSE papyrus interface. Plugin loading aborted.");
 			return false;
@@ -123,7 +109,7 @@ extern "C" {
 			return false;
 		}
 
-		wind::g_skseMessagingInterface->RegisterListener(wind::g_pluginHandle, "SKSE", &wind::skseCallback);
+		hdt::PluginHelper<MyHelper>::tryConnect(skse);
 
 		return true;
 	}
