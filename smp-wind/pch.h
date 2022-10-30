@@ -27,6 +27,7 @@
 #include "skse64/PapyrusVM.h"
 #include "skse64/PluginAPI.h"
 
+#define BT_USE_SSE_IN_API
 #include "BulletDynamics/Dynamics/btDynamicsWorld.h"
 #include "BulletDynamics/Dynamics/btRigidBody.h"
 
