@@ -50,7 +50,6 @@ static_assert(offsetof(Sky, mode) == 0x1bc);
 namespace wind
 {
 	constexpr int WORKERS = 8;
-	constexpr int MULTITHREAD_THRESHOLD = 500;
 
 	class Config;
 

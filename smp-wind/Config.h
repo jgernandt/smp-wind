@@ -10,6 +10,7 @@ namespace wind
 		enum BoolID : int
 		{
 			MASS_INDEPENDENT,
+
 			BOOL_COUNT
 		};
 		enum FloatID : int
@@ -22,7 +23,14 @@ namespace wind
 			OSC02SPAN,
 			NOISE,
 			HEIGHTFACTOR,
+
 			FLOAT_COUNT
+		};
+		enum IntID : int
+		{
+			MULTITHREAD_THRESHOLD,
+
+			INT_COUNT
 		};
 
 	public:
@@ -36,9 +44,13 @@ namespace wind
 		float getf(int id) const { assert(id >= 0 && id < FLOAT_COUNT); return m_floats[id]; }
 		void set(int id, float f);
 
+		int geti(int id) const { assert(id >= 0 && id < INT_COUNT); return m_ints[id]; }
+		void set(int id, int i);
+
 	private:
-		float m_floats[FLOAT_COUNT];
-		bool m_bools[BOOL_COUNT];
 		std::filesystem::path m_path;
+		float m_floats[FLOAT_COUNT];
+		int m_ints[INT_COUNT];
+		bool m_bools[BOOL_COUNT];
 	};
 }

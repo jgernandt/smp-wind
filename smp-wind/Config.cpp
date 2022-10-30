@@ -31,6 +31,14 @@ constexpr const char* KEYSF[wind::Config::FLOAT_COUNT]{
 	"fHeightFactor",
 };
 
+constexpr int DEFAULTSI[wind::Config::INT_COUNT]{
+	500,
+};
+
+constexpr const char* KEYSI[wind::Config::INT_COUNT]{
+	"iMultithreadThreshold",
+};
+
 constexpr const char* HEADER = "Wind";
 
 wind::Config::Config()
@@ -40,6 +48,9 @@ wind::Config::Config()
 	}
 	for (int i = 0; i < FLOAT_COUNT; i++) {
 		m_floats[i] = DEFAULTSF[i];
+	}
+	for (int i = 0; i < INT_COUNT; i++) {
+		m_ints[i] = DEFAULTSI[i];
 	}
 }
 
@@ -75,12 +86,33 @@ bool wind::Config::load(const std::filesystem::path& path)
 					m_floats[i] = DEFAULTSF[i];
 				}
 				else {
-					float f;
-					if (sscanf(buf, "%f", &f) == 0) {
+					errno = 0;
+					char* end;
+					float result = std::strtof(buf, &end);
+					if (end == &buf[0] || errno == ERANGE) {
+						_WARNING("WARNING: invalid float value %s for %s. Using default.", buf, KEYSF[i]);
 						m_floats[i] = DEFAULTSF[i];
 					}
 					else {
-						m_floats[i] = f;
+						m_floats[i] = result;
+					}
+				}
+			}
+			for (int i = 0; i < INT_COUNT; i++) {
+				DWORD res = GetPrivateProfileString(HEADER, KEYSI[i], NULL, buf, sizeof(buf), m_path.string().c_str());
+				if (res == 0) {
+					m_ints[i] = DEFAULTSI[i];
+				}
+				else {
+					errno = 0;
+					char* end;
+					int result = std::strtol(buf, &end, 10);
+					if (end == &buf[0] || errno == ERANGE) {
+						_WARNING("WARNING: invalid integer value %s for %s. Using default.", buf, KEYSI[i]);
+						m_ints[i] = DEFAULTSI[i];
+					}
+					else {
+						m_ints[i] = result;
 					}
 				}
 			}
@@ -91,6 +123,9 @@ bool wind::Config::load(const std::filesystem::path& path)
 			}
 			for (int i = 0; i < FLOAT_COUNT; i++) {
 				set(i, DEFAULTSF[i]);
+			}
+			for (int i = 0; i < INT_COUNT; i++) {
+				set(i, DEFAULTSI[i]);
 			}
 		}
 		return true;
@@ -115,4 +150,15 @@ void wind::Config::set(int id, float f)
 	char buf[16];
 	snprintf(buf, sizeof(buf), "%f", m_floats[id]);
 	WritePrivateProfileString(HEADER, KEYSF[id], buf, m_path.string().c_str());
+}
+
+void wind::Config::set(int id, int i)
+{
+	assert(id >= 0 && id < INT_COUNT);
+
+	m_ints[id] = i;
+
+	char buf[16];
+	snprintf(buf, sizeof(buf), "%d", m_ints[id]);
+	WritePrivateProfileString(HEADER, KEYSI[id], buf, m_path.string().c_str());
 }

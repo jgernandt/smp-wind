@@ -121,6 +121,7 @@
       <LanguageStandard>stdcpp20</LanguageStandard>
       <AdditionalIncludeDirectories>$(SolutionDir)\..\SKSE\1_6_640\include;$(SolutionDir)\..\hdtSMP64\hdtSMP64</AdditionalIncludeDirectories>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
+      <EnableEnhancedInstructionSet>NotSet</EnableEnhancedInstructionSet>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -143,6 +144,7 @@
       <AdditionalIncludeDirectories>$(SolutionDir)\..\SKSE\1_6_640\include;$(SolutionDir)\..\hdtSMP64\hdtSMP64</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpp20</LanguageStandard>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
+      <EnableEnhancedInstructionSet>NotSet</EnableEnhancedInstructionSet>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -156,7 +158,6 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="Config.h" />
-    <ClInclude Include="papyrus.h" />
     <ClInclude Include="pch.h" />
     <ClInclude Include="PluginHelper.h" />
     <ClInclude Include="Timer.h" />

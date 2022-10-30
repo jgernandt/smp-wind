@@ -28,9 +28,22 @@ float[] precisions
 string[] formats
 string[] infos
 
+;Ints
+int MT_THRESHOLD = 0
+int INT_COUNT = 1
+
+int[] iIDs
+int[] iDefaults
+int[] iValues
+float[] iRangeMin
+float[] iRangeMax
+float[] iPrecisions
+string[] iInfo
+
 event OnConfigInit()
 	initV1()
 	initV2()
+	initV3()
 endevent
 
 event OnOptionDefault(int id)
@@ -54,6 +67,16 @@ event OnOptionDefault(int id)
 			return
 		endif
 	endwhile
+	i = INT_COUNT
+	while i
+		i -= 1
+		if id == iIDs[i]
+			iValues[i] = iDefaults[i]
+			SetSliderOptionValue(id, iValues[i])
+			SetInt(i, iValues[i])
+			return
+		endif
+	endwhile
 endevent
 
 event OnOptionHighlight(int id)
@@ -70,6 +93,14 @@ event OnOptionHighlight(int id)
 		i -= 1
 		if id == ids[i]
 			SetInfoText(infos[i])
+			return
+		endif
+	endwhile
+	i = INT_COUNT
+	while i
+		i -= 1
+		if id == iIDs[i]
+			SetInfoText(iInfo[i])
 			return
 		endif
 	endwhile
@@ -94,6 +125,16 @@ event OnOptionSliderAccept(int id, float val)
 			return
 		endif
 	endwhile
+	i = INT_COUNT
+	while i
+		i -= 1
+		if id == iIDs[i]
+			iValues[i] = val as int
+			SetSliderOptionValue(id, val)
+			SetInt(i, val as int)
+			return
+		endif
+	endwhile
 endevent
 
 event OnOptionSliderOpen(int id)
@@ -108,12 +149,25 @@ event OnOptionSliderOpen(int id)
 			return
 		endif
 	endwhile
+	i = INT_COUNT
+	while i
+		i -= 1
+		if id == iIDs[i]
+			SetSliderDialogStartValue(iValues[i] as float)
+			SetSliderDialogDefaultValue(iDefaults[i] as float)
+			SetSliderDialogRange(iRangeMin[i], iRangeMax[i])
+			SetSliderDialogInterval(iPrecisions[i])
+			return
+		endif
+	endwhile
 endevent
 
 event OnPageReset(string name)
 	;Temporary solution, since we didn't add an autoupdater in v1.
 	;Will be removed in a future version.
-	CheckVersion()
+	if CurrentVersion == 1
+		CheckVersion()
+	endif
 	
 	;Check for external edits to the config file
 	ReadConfig()
@@ -134,12 +188,19 @@ event OnPageReset(string name)
 		ids[OSC02_FORCE] = AddSliderOption("$Magnitude", values[OSC02_FORCE], formats[OSC02_FORCE])
 		ids[OSC02_FREQ] = AddSliderOption("$Frequency", values[OSC02_FREQ], formats[OSC02_FREQ])
 		ids[OSC02_SPAN] = AddSliderOption("$Span", values[OSC02_SPAN], formats[OSC02_SPAN])
+		
+		SetCursorPosition(1)
+		AddHeaderOption("$Performance")
+		iIDs[MT_THRESHOLD] = AddSliderOption("$Multithread threshold", iValues[MT_THRESHOLD], "{0}")
 	endif
 endevent
 
 event OnVersionUpdate(int newVersion)
 	if CurrentVersion < 2 && newVersion >= 2
 		initV2()
+	endif
+	if CurrentVersion < 3 && newVersion >= 3
+		initV3()
 	endif
 endevent
 
@@ -151,8 +212,12 @@ float function GetFloatDefault(int id) global native
 float function GetFloat(int id) global native
 function SetFloat(int id, float val) global native
 
+int function GetIntDefault(int id) global native
+int function GetInt(int id) global native
+function SetInt(int id, int val) global native
+
 int function GetVersion()
-	return 2
+	return 3
 endfunction
 
 function InitV1()
@@ -213,6 +278,21 @@ function InitV2()
 	infos[ALTITUDE_FACTOR] = "$INFO_ALTITUDE_FACTOR"
 endfunction
 
+function InitV3()
+	iIDs = new int[1]
+	iDefaults = new int[1]
+	iValues = new int[1]
+	iRangeMin = new float[1]
+	iRangeMax = new float[1]
+	iPrecisions = new float[1]
+	iInfo = new string[1]
+	
+	iRangeMin[MT_THRESHOLD] = 0.0
+	iRangeMax[MT_THRESHOLD] = 2000.0
+	iPrecisions[MT_THRESHOLD] = 10.0
+	iInfo[MT_THRESHOLD] = "$INFO_MT_THRESHOLD"
+endfunction
+
 function ReadConfig()
 	int i = BOOL_COUNT
 	while i
@@ -225,5 +305,11 @@ function ReadConfig()
 		i -= 1
 		values[i] = GetFloat(i)
 		defaults[i] = GetFloatDefault(i)
+	endwhile
+	i = INT_COUNT
+	while i
+		i -= 1
+		iValues[i] = GetInt(i)
+		iDefaults[i] = GetIntDefault(i)
 	endwhile
 endfunction

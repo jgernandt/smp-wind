@@ -3,6 +3,8 @@
 #include "Timer.h"
 #include "Wind.h"
 
+#define LOG_TIMER
+
 RelocAddr<Sky* (*)()> GetSky(0x00183530);
 
 wind::Wind::~Wind()
@@ -20,6 +22,8 @@ void wind::Wind::onEvent(const hdt::PreStepEvent& e)
 	Timer<long long, std::micro> timer;
 #endif
 
+	assert(m_config);
+
 	m_currentTime += e.timeStep;
 	m_sky = GetSky();
 	if (m_sky && m_sky->mode == Sky::kFull && m_sky->windSpeed != 0.0f) {
@@ -31,7 +35,7 @@ void wind::Wind::onEvent(const hdt::PreStepEvent& e)
 		//This is likely to be situational, though.
 		//Potentially, this could be tuned automatically by alternating between the paths and favouring whichever
 		//is currently faster. Probably not worth the trouble, though.
-		if (e.objects.size() < MULTITHREAD_THRESHOLD) {
+		if (e.objects.size() < m_config->geti(Config::MULTITHREAD_THRESHOLD)) {
 			//do it ourselves
 			for (int i = 0; i < e.objects.size(); i++) {
 				process(e.objects[i]);

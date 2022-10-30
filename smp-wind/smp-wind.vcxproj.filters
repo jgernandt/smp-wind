@@ -24,9 +24,6 @@
     <ClInclude Include="Wind.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="papyrus.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="Config.h">
       <Filter>Header Files</Filter>
     </ClInclude>
