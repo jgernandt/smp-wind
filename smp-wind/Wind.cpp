@@ -3,7 +3,11 @@
 #include "Timer.h"
 #include "Wind.h"
 
+#ifdef V1_6_353
+RelocAddr<Sky* (*)()> GetSky(0x00181810);
+#else
 RelocAddr<Sky* (*)()> GetSky(0x00183530);
+#endif
 
 wind::Wind::~Wind()
 {

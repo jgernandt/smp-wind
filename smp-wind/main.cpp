@@ -69,9 +69,15 @@ extern "C" {
 		"SMP Wind",
 		"jgernandt",
 		"",
+#ifndef V1_6_353
 		0,
+#endif
 		0,
+#ifdef V1_6_353
+		{ RUNTIME_VERSION_1_6_353, 0 },
+#else
 		{ RUNTIME_VERSION_1_6_640, 0 },
+#endif
 		0,
 	};
 
@@ -98,7 +104,11 @@ extern "C" {
 			GET_EXE_VERSION_MAJOR(skse->skseVersion),
 			GET_EXE_VERSION_MINOR(skse->skseVersion),
 			GET_EXE_VERSION_BUILD(skse->skseVersion));
+#ifdef V1_6_353
+		_MESSAGE("Plugin version %d.%d.%d-353\n", wind::VERSION_MAJOR, wind::VERSION_MINOR, wind::VERSION_PATCH);
+#else
 		_MESSAGE("Plugin version %d.%d.%d-640\n", wind::VERSION_MAJOR, wind::VERSION_MINOR, wind::VERSION_PATCH);
+#endif
 
 		auto spi = static_cast<SKSEPapyrusInterface*>(skse->QueryInterface(kInterface_Papyrus));
 
