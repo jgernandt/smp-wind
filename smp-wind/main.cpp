@@ -10,7 +10,7 @@ class VMClassRegistry;
 namespace wind
 {
 	constexpr unsigned long VERSION_MAJOR{ 2 };
-	constexpr unsigned long VERSION_MINOR{ 0 };
+	constexpr unsigned long VERSION_MINOR{ 1 };
 	constexpr unsigned long VERSION_PATCH{ 0 };
 	constexpr unsigned long pluginVersion = (VERSION_MAJOR & 0xFF) << 24 | (VERSION_MINOR & 0xFF) << 16 | (VERSION_PATCH & 0xFF) << 8;
 
@@ -73,10 +73,12 @@ extern "C" {
 		0,
 #endif
 		0,
-#ifdef V1_6_353
+#if defined(V1_6_353)
 		{ RUNTIME_VERSION_1_6_353, 0 },
-#else
+#elif defined(V1_6_640)
 		{ RUNTIME_VERSION_1_6_640, 0 },
+#elif defined(V1_6_1130)
+		{ RUNTIME_VERSION_1_6_1130, 0 },
 #endif
 		0,
 	};
@@ -104,10 +106,12 @@ extern "C" {
 			GET_EXE_VERSION_MAJOR(skse->skseVersion),
 			GET_EXE_VERSION_MINOR(skse->skseVersion),
 			GET_EXE_VERSION_BUILD(skse->skseVersion));
-#ifdef V1_6_353
+#if defined(V1_6_353)
 		_MESSAGE("Plugin version %d.%d.%d-353\n", wind::VERSION_MAJOR, wind::VERSION_MINOR, wind::VERSION_PATCH);
-#else
+#elif defined(V1_6_640)
 		_MESSAGE("Plugin version %d.%d.%d-640\n", wind::VERSION_MAJOR, wind::VERSION_MINOR, wind::VERSION_PATCH);
+#elif defined(V1_6_1130)
+		_MESSAGE("Plugin version %d.%d.%d-1130\n", wind::VERSION_MAJOR, wind::VERSION_MINOR, wind::VERSION_PATCH);
 #endif
 
 		auto spi = static_cast<SKSEPapyrusInterface*>(skse->QueryInterface(kInterface_Papyrus));
@@ -126,6 +130,9 @@ extern "C" {
 
 		return true;
 	}
+
+	__declspec(dllexport) bool SKSEPlugin_Query(const SKSEInterface*, PluginInfo*)
+	{
+		return false;
+	}
 };
-
-
