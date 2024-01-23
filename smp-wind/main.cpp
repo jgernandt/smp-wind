@@ -4,16 +4,12 @@
 
 #include "Config.h"
 #include "Wind.h"
+#include "version.h"
 
 class VMClassRegistry;
 
 namespace wind
 {
-	constexpr unsigned long VERSION_MAJOR{ 2 };
-	constexpr unsigned long VERSION_MINOR{ 1 };
-	constexpr unsigned long VERSION_PATCH{ 0 };
-	constexpr unsigned long pluginVersion = (VERSION_MAJOR & 0xFF) << 24 | (VERSION_MINOR & 0xFF) << 16 | (VERSION_PATCH & 0xFF) << 8;
-
 	Config g_config;
 	Config g_configDefault;
 	Wind g_wind;
@@ -65,7 +61,7 @@ extern "C" {
 
 	__declspec(dllexport) SKSEPluginVersionData SKSEPlugin_Version = {
 		SKSEPluginVersionData::kVersion,
-		wind::pluginVersion,
+		VERSION,
 		"SMP Wind",
 		"jgernandt",
 		"",
@@ -73,13 +69,7 @@ extern "C" {
 		0,
 #endif
 		0,
-#if defined(V1_6_353)
-		{ RUNTIME_VERSION_1_6_353, 0 },
-#elif defined(V1_6_640)
-		{ RUNTIME_VERSION_1_6_640, 0 },
-#elif defined(V1_6_1130)
-		{ RUNTIME_VERSION_1_6_1130, 0 },
-#endif
+		{ VERSION_TARGET, 0 },
 		0,
 	};
 
@@ -106,13 +96,7 @@ extern "C" {
 			GET_EXE_VERSION_MAJOR(skse->skseVersion),
 			GET_EXE_VERSION_MINOR(skse->skseVersion),
 			GET_EXE_VERSION_BUILD(skse->skseVersion));
-#if defined(V1_6_353)
-		_MESSAGE("Plugin version %d.%d.%d-353\n", wind::VERSION_MAJOR, wind::VERSION_MINOR, wind::VERSION_PATCH);
-#elif defined(V1_6_640)
-		_MESSAGE("Plugin version %d.%d.%d-640\n", wind::VERSION_MAJOR, wind::VERSION_MINOR, wind::VERSION_PATCH);
-#elif defined(V1_6_1130)
-		_MESSAGE("Plugin version %d.%d.%d-1130\n", wind::VERSION_MAJOR, wind::VERSION_MINOR, wind::VERSION_PATCH);
-#endif
+		_MESSAGE("Plugin version %d.%d.%d-%d\n", VERSION_MAJOR, VERSION_MINOR, VERSION_PATCH, VERSION_TARGET);
 
 		auto spi = static_cast<SKSEPapyrusInterface*>(skse->QueryInterface(kInterface_Papyrus));
 
@@ -131,8 +115,12 @@ extern "C" {
 		return true;
 	}
 
-	__declspec(dllexport) bool SKSEPlugin_Query(const SKSEInterface*, PluginInfo*)
+	__declspec(dllexport) bool SKSEPlugin_Query(const SKSEInterface*, PluginInfo* info)
 	{
+		info->infoVersion = PluginInfo::kInfoVersion;
+		info->name = SKSEPlugin_Version.name;
+		info->version = SKSEPlugin_Version.pluginVersion;
+
 		return false;
 	}
 };

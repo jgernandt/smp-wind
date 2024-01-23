@@ -2,14 +2,9 @@
 #include "Config.h"
 #include "Timer.h"
 #include "Wind.h"
+#include "version.h"
 
-#if defined(V1_6_353)
-RelocAddr<Sky* (*)()> GetSky(0x00181810);
-#elif defined(V1_6_640)
-RelocAddr<Sky* (*)()> GetSky(0x00183530);
-#elif defined(V1_6_1130)
-RelocAddr<Sky* (*)()> GetSky(0x001c2550);
-#endif
+RelocAddr<Sky* (*)()> GetSky(GetSkyOffset);
 
 wind::Wind::~Wind()
 {
