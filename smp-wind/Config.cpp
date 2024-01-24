@@ -54,6 +54,13 @@ wind::Config::Config()
 	}
 }
 
+wind::Config::~Config()
+{
+	for (auto item : m_boneFactors) {
+		delete[] item.first;
+	}
+}
+
 bool wind::Config::load(const std::filesystem::path& path)
 {
 	if (path.extension().string() != ".ini") {
@@ -114,6 +121,42 @@ bool wind::Config::load(const std::filesystem::path& path)
 					else {
 						m_ints[i] = result;
 					}
+				}
+			}
+
+			std::ifstream file(path);
+
+			while (file.getline(buf, 256)) {
+				if (strcmp(buf, "[Bones]") == 0) {
+					break;
+				}
+			}
+
+			while (file.good()) {
+
+				char next = file.peek();
+				if (std::isspace(next) || next == '[') {
+					break;
+				}
+
+				auto s = new char[64];
+				file.getline(s, 64, '=');
+
+				file.getline(buf, 64);
+
+				if (!m_boneFactors.contains(s)) {
+
+					float f = std::max(std::strtof(buf, nullptr), 0.0f);
+
+					if (f != 1.0) {
+						m_boneFactors[s] = f;
+
+						_MESSAGE("Scaling wind on bone \"%s\" by a factor %g.", s, f);
+					}
+				}
+				else {
+					_WARNING("WARNING: Ignoring duplicate entry for bone \"%s\".", s);
+					delete[] s;
 				}
 			}
 		}

@@ -7,6 +7,7 @@
 #include <cstdint>
 #include <cstdio>
 #include <filesystem>
+#include <fstream>
 #include <map>
 #include <semaphore>
 #include <string>
@@ -14,6 +15,8 @@
 
 #include <ShlObj.h>
 #include <Windows.h>
+#undef min
+#undef max
 
 #include "common/IDebugLog.h"
 #include "common/ITypes.h"

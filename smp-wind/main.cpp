@@ -4,7 +4,11 @@
 
 #include "Config.h"
 #include "Wind.h"
-#include "version.h"
+
+constexpr unsigned long VERSION_MAJOR{ 2 };
+constexpr unsigned long VERSION_MINOR{ 2 };
+constexpr unsigned long VERSION_PATCH{ 0 };
+constexpr unsigned long VERSION = (VERSION_MAJOR & 0xFF) << 24 | (VERSION_MINOR & 0xFF) << 16 | (VERSION_PATCH & 0xFF) << 8;
 
 class VMClassRegistry;
 
@@ -32,12 +36,10 @@ public:
 		HRESULT res = SHGetKnownFolderPath(FOLDERID_Documents, 0, NULL, &wpath);
 		if (SUCCEEDED(res)) {
 			std::filesystem::path documents(wpath, std::filesystem::path::native_format);
-			std::filesystem::path configPath(documents / "My Games\\Skyrim Special Edition\\SKSE\\SMP Wind.ini");
 
-			_MESSAGE("Loading config file %s...", configPath.string().c_str());
-
-			if (wind::g_config.load(configPath)) {
-				_MESSAGE("Config file loaded.\n");
+			_MESSAGE("Loading settings...");
+			if (wind::g_config.load(documents / "My Games\\" SAVE_FOLDER_NAME "\\SKSE\\SMP Wind.ini")) {
+				_MESSAGE("Settings loaded.\n");
 			}
 			else {
 				_WARNING("WARNING: Failed to load config file. Settings will not be saved.\n");
@@ -51,7 +53,7 @@ public:
 
 		smp->addListener(&wind::g_wind);
 
-		_MESSAGE("Initialisation complete.\n");
+		_MESSAGE("Initialisation complete.");
 	}
 
 	static void skseCallback(SKSEMessagingInterface::Message* msg) {}
@@ -65,11 +67,11 @@ extern "C" {
 		"SMP Wind",
 		"jgernandt",
 		"",
-#ifndef V1_6_353
+#if CURRENT_RELEASE_RUNTIME > RUNTIME_VERSION_1_6_353
 		0,
 #endif
 		0,
-		{ VERSION_TARGET, 0 },
+		{ CURRENT_RELEASE_RUNTIME, 0 },
 		0,
 	};
 
@@ -77,7 +79,7 @@ extern "C" {
 	{
 		assert(skse);
 
-		gLog.OpenRelative(CSIDL_MYDOCUMENTS, "\\My Games\\Skyrim Special Edition\\SKSE\\SMP Wind.log");
+		gLog.OpenRelative(CSIDL_MYDOCUMENTS, "\\My Games\\" SAVE_FOLDER_NAME "\\SKSE\\SMP Wind.log");
 #ifdef _DEBUG
 		gLog.SetPrintLevel(IDebugLog::kLevel_DebugMessage);
 		gLog.SetLogLevel(IDebugLog::kLevel_DebugMessage);
@@ -88,15 +90,15 @@ extern "C" {
 
 		unsigned int runtime = skse->runtimeVersion;
 
-		_MESSAGE("Game version %d.%d.%d",
+		_MESSAGE("Skyrim version:\t%d.%d.%d",
 			GET_EXE_VERSION_MAJOR(runtime),
 			GET_EXE_VERSION_MINOR(runtime),
 			GET_EXE_VERSION_BUILD(runtime));
-		_MESSAGE("SKSE version %d.%d.%d",
+		_MESSAGE("SKSE version:\t%d.%d.%d",
 			GET_EXE_VERSION_MAJOR(skse->skseVersion),
 			GET_EXE_VERSION_MINOR(skse->skseVersion),
 			GET_EXE_VERSION_BUILD(skse->skseVersion));
-		_MESSAGE("Plugin version %d.%d.%d-%d\n", VERSION_MAJOR, VERSION_MINOR, VERSION_PATCH, VERSION_TARGET);
+		_MESSAGE("Plugin version:\t%d.%d.%d-%x\n", VERSION_MAJOR, VERSION_MINOR, VERSION_PATCH, CURRENT_RELEASE_RUNTIME);
 
 		auto spi = static_cast<SKSEPapyrusInterface*>(skse->QueryInterface(kInterface_Papyrus));
 

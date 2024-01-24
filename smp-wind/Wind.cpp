@@ -2,9 +2,17 @@
 #include "Config.h"
 #include "Timer.h"
 #include "Wind.h"
-#include "version.h"
 
-RelocAddr<Sky* (*)()> GetSky(GetSkyOffset);
+//id 13878
+#if CURRENT_RELEASE_RUNTIME == RUNTIME_VERSION_1_6_353
+RelocAddr<Sky* (*)()> GetSky(0x00181810);
+#elif CURRENT_RELEASE_RUNTIME == RUNTIME_VERSION_1_6_640
+RelocAddr<Sky* (*)()> GetSky(0x00183530);
+#elif CURRENT_RELEASE_RUNTIME == RUNTIME_VERSION_1_6_1130
+RelocAddr<Sky* (*)()> GetSky(0x001c2550);
+#elif CURRENT_RELEASE_RUNTIME == RUNTIME_VERSION_1_6_1170
+RelocAddr<Sky* (*)()> GetSky(0x001c2640);
+#endif
 
 wind::Wind::~Wind()
 {
@@ -80,6 +88,8 @@ void wind::Wind::init(const Config& config)
 
 void wind::Wind::shutdown()
 {
+	//_DMESSAGE("We're never getting here, are we?");
+
 	m_objectArray = nullptr;
 	m_startSignal.release(WORKERS);
 
@@ -133,9 +143,46 @@ void wind::Wind::process(btCollisionObject* object)
 
 	btRigidBody* body = btRigidBody::upcast(object);
 	if (body && !body->isStaticOrKinematicObject()) {
-		//scale by 100 * m, since that's the oom we adapted the wind for
-		float rescale = m_config->getb(Config::MASS_INDEPENDENT) ? 100.0f * body->getMass() : 1.0f;
-		body->applyCentralForce(rescale * eval(body->getWorldTransform().getOrigin()));
+
+		float factor = 1.0;
+
+		if (m_config->hasBoneFactors()) {
+
+			//hack
+			//The btRigidBody should be a member of an hdt::SkyrimBone, which also has the bone's NiNode* as a member
+			//offsetof(hdt::SkyrimBone, m_name) == 16		doesn't actually store the name?
+			//offsetof(hdt::SkyrimBone, m_rig) == 48		btRigidBody
+			//offsetof(hdt::SkyrimBone, m_node) == 1112		NiNode*
+			//NOTE: This is NOT part of FSMPs public API and may break, without warning, in any past or future version
+			auto node = *reinterpret_cast<uintptr_t*>(reinterpret_cast<uintptr_t>(body) + 1064);
+			if (node) {
+
+				//name is really a BSFixedString, but we're unable to exploit this due to the renaming
+				auto name = *reinterpret_cast<const char**>(node + 16);
+				if (name) {
+
+					//they should have added "hdtSSEPhysics_AutoRename_Armor_XXXXXXXX " or 
+					// "hdtSSEPhysics_AutoRename_Head_XXXXXXXX " before the bone name
+
+					const char* begin = name;
+
+					if (name[25] == 'A') {
+						begin = name + 40;
+					}
+					else if (name[25] == 'H') {
+						begin = name + 39;
+					}
+
+					factor = m_config->getBoneFactor(begin);
+				}
+			}
+		}
+
+		if (factor > 0.0) {
+			//scale by 100 * m, since that's the oom we adapted the wind for
+			float rescale = m_config->getb(Config::MASS_INDEPENDENT) ? 100.0f * body->getMass() : 1.0f;
+			body->applyCentralForce(factor * rescale * eval(body->getWorldTransform().getOrigin()));
+		}
 	}
 }
 
