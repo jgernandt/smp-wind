@@ -88,7 +88,7 @@ namespace wind
 
 	public:
 		Wind() = default;
-		~Wind();
+		~Wind() = default;
 
 		virtual void onEvent(const hdt::PreStepEvent& e) override;
 

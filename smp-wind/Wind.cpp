@@ -3,8 +3,6 @@
 #include "Timer.h"
 #include "Wind.h"
 
-#define LOG_TIMER
-
 //id 13878
 #if CURRENT_RELEASE_RUNTIME == RUNTIME_VERSION_1_6_353
 RelocAddr<Sky* (*)()> GetSky(0x00181810);
@@ -16,11 +14,6 @@ RelocAddr<Sky* (*)()> GetSky(0x001c2550);
 RelocAddr<Sky* (*)()> GetSky(0x001c2640);
 #endif
 
-wind::Wind::~Wind()
-{
-	//we're never actually getting here
-	m_threadPool.reset();
-}
 
 void wind::Wind::onEvent(const hdt::PreStepEvent& e)
 {
