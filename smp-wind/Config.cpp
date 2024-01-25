@@ -139,7 +139,7 @@ bool wind::Config::load(const std::filesystem::path& path)
 			while (file.good()) {
 
 				char next = file.peek();
-				if (std::isspace(next) || next == '[') {
+				if (std::isspace(next) || next == '[' || !file.good()) {
 					break;
 				}
 
