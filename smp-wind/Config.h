@@ -11,6 +11,7 @@ namespace wind
 		enum BoolID : int
 		{
 			MASS_INDEPENDENT,
+			LOG_PERFORMANCE,
 
 			BOOL_COUNT
 		};

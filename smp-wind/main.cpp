@@ -53,7 +53,7 @@ public:
 
 		smp->addListener(&wind::g_wind);
 
-		_MESSAGE("Initialisation complete.");
+		_MESSAGE("Initialisation complete.\n");
 	}
 
 	static void skseCallback(SKSEMessagingInterface::Message* msg) {}

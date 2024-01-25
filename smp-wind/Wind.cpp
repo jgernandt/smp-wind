@@ -3,6 +3,8 @@
 #include "Timer.h"
 #include "Wind.h"
 
+#define LOG_TIMER
+
 //id 13878
 #if CURRENT_RELEASE_RUNTIME == RUNTIME_VERSION_1_6_353
 RelocAddr<Sky* (*)()> GetSky(0x00181810);
@@ -22,7 +24,6 @@ wind::Wind::~Wind()
 
 void wind::Wind::onEvent(const hdt::PreStepEvent& e)
 {
-#ifdef LOG_TIMER
 	constexpr int NFRAMES = 120;
 
 	static std::vector<int> frameTimes(NFRAMES);
@@ -30,7 +31,6 @@ void wind::Wind::onEvent(const hdt::PreStepEvent& e)
 	static int frame = 0;
 
 	Timer<int, std::micro> timer;
-#endif
 
 
 	assert(m_config);
@@ -68,38 +68,38 @@ void wind::Wind::onEvent(const hdt::PreStepEvent& e)
 		m_currentTime = 0.0f;
 	}
 
-#ifdef LOG_TIMER
-	frameObjs[frame] = e.objects.size();
-	frameTimes[frame++] = timer.elapsed();
+	if (m_config->getb(Config::LOG_PERFORMANCE)) {
+		frameObjs[frame] = e.objects.size();
+		frameTimes[frame++] = timer.elapsed();
 
-	if (frame == NFRAMES) {
+		if (frame == NFRAMES) {
 
-		frame = 0;
+			frame = 0;
 
-		int meant = 0;
-		int maxt = 0;
-		int mint = std::numeric_limits<int>::max();
-		int maxo = 0;
-		int mino = std::numeric_limits<int>::max();
-		for (int i = 0; i < NFRAMES; i++) {
-			meant += frameTimes[i];
-			maxt = std::max(frameTimes[i], maxt);
-			mint = std::min(frameTimes[i], mint);
-			maxo = std::max(frameObjs[i], maxo);
-			mino = std::min(frameObjs[i], mino);
+			int meant = 0;
+			int maxt = 0;
+			int mint = std::numeric_limits<int>::max();
+			int maxo = 0;
+			int mino = std::numeric_limits<int>::max();
+			for (int i = 0; i < NFRAMES; i++) {
+				meant += frameTimes[i];
+				maxt = std::max(frameTimes[i], maxt);
+				mint = std::min(frameTimes[i], mint);
+				maxo = std::max(frameObjs[i], maxo);
+				mino = std::min(frameObjs[i], mino);
+			}
+			meant /= NFRAMES;
+
+			float var = 0.0f;
+			for (auto f : frameTimes) {
+				var += (f - meant) * (f - meant);
+			}
+			var /= NFRAMES;
+
+			_MESSAGE("Mean time (%d updates): %3d ± %-3d (%3d - %-3d) microseconds (%3d - %-3d collision objects)",
+				NFRAMES, meant, (int)std::sqrt(var), mint, maxt, mino, maxo);
 		}
-		meant /= NFRAMES;
-
-		float var = 0.0f;
-		for (auto f : frameTimes) {
-			var += (f - meant) * (f - meant);
-		}
-		var /= NFRAMES;
-
-		_MESSAGE("Mean time (%d updates): %3d ± %-3d (%3d - %-3d) microseconds (%3d - %-3d collision objects)", 
-			NFRAMES, meant, (int)std::sqrt(var), mint, maxt, mino, maxo);
 	}
-#endif
 }
 
 void wind::Wind::init(const Config& config)

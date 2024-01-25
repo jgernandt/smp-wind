@@ -2,7 +2,8 @@ scriptname JGWD_MCM extends SKI_ConfigBase
 
 ;Bools
 int MASS_INDEPENDENT = 0
-int BOOL_COUNT = 1
+int LOG_PERFORMANCE = 1
+int BOOL_COUNT = 2
 
 int[] bIDs
 bool[] bDefaults
@@ -44,7 +45,7 @@ string[] iInfo
 event OnConfigInit()
 	initV1()
 	initV2()
-	initV3()
+	;initV3() undone by v4
 	initV4()
 endevent
 
@@ -109,11 +110,16 @@ event OnOptionHighlight(int id)
 endevent
 
 event OnOptionSelect(int id)
-	if id == bIDs[MASS_INDEPENDENT]
-		bValues[MASS_INDEPENDENT] = !bValues[MASS_INDEPENDENT]
-		SetToggleOptionValue(id, bValues[MASS_INDEPENDENT])
-		SetBool(MASS_INDEPENDENT, bValues[MASS_INDEPENDENT])
-	endif
+	int i = BOOL_COUNT
+	while i
+		i -= 1
+		if id == bIDs[i]
+			bValues[i] = !bValues[i]
+			SetToggleOptionValue(id, bValues[i])
+			SetBool(i, bValues[i])
+			return
+		endif
+	endwhile
 endevent
 
 event OnOptionSliderAccept(int id, float val)
@@ -140,7 +146,6 @@ event OnOptionSliderAccept(int id, float val)
 endevent
 
 event OnOptionSliderOpen(int id)
-	debug.trace("open slider: " + id)
 	int i = FLOAT_COUNT
 	while i
 		i -= 1
@@ -190,8 +195,8 @@ event OnPageReset(string name)
 		SetCursorPosition(1)
 		AddHeaderOption("$Performance")
 		iIDs[THREADS] = AddSliderOption("$Threads", iValues[THREADS], "{0}")
-		debug.trace("threads id: " + iIDs[THREADS])
 		iIDs[MT_THRESHOLD] = AddSliderOption("$Multithread threshold", iValues[MT_THRESHOLD], "{0}")
+		bIDs[LOG_PERFORMANCE] = AddToggleOption("$Log performance", bValues[LOG_PERFORMANCE])
 	endif
 endevent
 
@@ -199,7 +204,7 @@ event OnVersionUpdate(int newVersion)
 	if CurrentVersion < 2 && newVersion >= 2
 		initV2()
 	endif
-	;completely replaced by v4
+	;completely undone by v4
 	;if CurrentVersion < 3 && newVersion >= 3
 	;	initV3()
 	;endif
@@ -282,23 +287,16 @@ function InitV2()
 	infos[ALTITUDE_FACTOR] = "$INFO_ALTITUDE_FACTOR"
 endfunction
 
-function InitV3()
-	iIDs = new int[1]
-	iDefaults = new int[1]
-	iValues = new int[1]
-	iRangeMin = new float[1]
-	iRangeMax = new float[1]
-	iPrecisions = new float[1]
-	iInfo = new string[1]
-	
-	iRangeMin[MT_THRESHOLD] = 0.0
-	iRangeMax[MT_THRESHOLD] = 2000.0
-	iPrecisions[MT_THRESHOLD] = 10.0
-	iInfo[MT_THRESHOLD] = "$INFO_MT_THRESHOLD"
-endfunction
-
 function InitV4()
-	Debug.Trace("init v4")
+	BOOL_COUNT = 2
+	
+	bIDs = new int[2]
+	bDefaults = new bool[2]
+	bValues = new bool[2]
+	bInfo = new string[2]
+	
+	bInfo[MASS_INDEPENDENT] = "$INFO_MASS_INDEPENDENT"
+	bInfo[LOG_PERFORMANCE] = "$INFO_LOG_PERFORMANCE"
 	
 	INT_COUNT = 2
 	

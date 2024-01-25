@@ -3,10 +3,12 @@
 
 constexpr bool DEFAULTSB[wind::Config::BOOL_COUNT]{
 	false,
+	false,
 };
 
 constexpr const char* KEYSB[wind::Config::BOOL_COUNT]{
 	"bMassIndependent",
+	"bLogPerformance",
 };
 
 constexpr float DEFAULTSF[wind::Config::FLOAT_COUNT]{
