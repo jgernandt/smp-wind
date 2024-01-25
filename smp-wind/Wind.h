@@ -71,6 +71,8 @@ namespace wind
 
 			ThreadPool& operator=(const ThreadPool&) = delete;
 
+			int size() const { return (int)m_threads.size(); }
+
 			void release(Wind* target);
 			void wait() { m_barrier.arrive_and_wait(); }
 
@@ -91,6 +93,7 @@ namespace wind
 		virtual void onEvent(const hdt::PreStepEvent& e) override;
 
 		void init(const Config& config);
+		void updateThreadCount();
 
 	private:
 		btVector3 eval(const btVector3& at);

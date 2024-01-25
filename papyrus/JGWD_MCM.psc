@@ -30,7 +30,8 @@ string[] infos
 
 ;Ints
 int MT_THRESHOLD = 0
-int INT_COUNT = 1
+int THREADS = 1
+int INT_COUNT = 2
 
 int[] iIDs
 int[] iDefaults
@@ -44,6 +45,7 @@ event OnConfigInit()
 	initV1()
 	initV2()
 	initV3()
+	initV4()
 endevent
 
 event OnOptionDefault(int id)
@@ -138,6 +140,7 @@ event OnOptionSliderAccept(int id, float val)
 endevent
 
 event OnOptionSliderOpen(int id)
+	debug.trace("open slider: " + id)
 	int i = FLOAT_COUNT
 	while i
 		i -= 1
@@ -163,11 +166,6 @@ event OnOptionSliderOpen(int id)
 endevent
 
 event OnPageReset(string name)
-	;Temporary solution, since we didn't add an autoupdater in v1.
-	;Will be removed in a future version.
-	if CurrentVersion == 1
-		CheckVersion()
-	endif
 	
 	;Check for external edits to the config file
 	ReadConfig()
@@ -191,6 +189,8 @@ event OnPageReset(string name)
 		
 		SetCursorPosition(1)
 		AddHeaderOption("$Performance")
+		iIDs[THREADS] = AddSliderOption("$Threads", iValues[THREADS], "{0}")
+		debug.trace("threads id: " + iIDs[THREADS])
 		iIDs[MT_THRESHOLD] = AddSliderOption("$Multithread threshold", iValues[MT_THRESHOLD], "{0}")
 	endif
 endevent
@@ -199,8 +199,12 @@ event OnVersionUpdate(int newVersion)
 	if CurrentVersion < 2 && newVersion >= 2
 		initV2()
 	endif
-	if CurrentVersion < 3 && newVersion >= 3
-		initV3()
+	;completely replaced by v4
+	;if CurrentVersion < 3 && newVersion >= 3
+	;	initV3()
+	;endif
+	if CurrentVersion < 4 && newVersion >= 4
+		initV4()
 	endif
 endevent
 
@@ -217,7 +221,7 @@ int function GetInt(int id) global native
 function SetInt(int id, int val) global native
 
 int function GetVersion()
-	return 3
+	return 4
 endfunction
 
 function InitV1()
@@ -291,6 +295,30 @@ function InitV3()
 	iRangeMax[MT_THRESHOLD] = 2000.0
 	iPrecisions[MT_THRESHOLD] = 10.0
 	iInfo[MT_THRESHOLD] = "$INFO_MT_THRESHOLD"
+endfunction
+
+function InitV4()
+	Debug.Trace("init v4")
+	
+	INT_COUNT = 2
+	
+	iIDs = new int[2]
+	iDefaults = new int[2]
+	iValues = new int[2]
+	iRangeMin = new float[2]
+	iRangeMax = new float[2]
+	iPrecisions = new float[2]
+	iInfo = new string[2]
+	
+	iRangeMin[MT_THRESHOLD] = 0.0
+	iRangeMax[MT_THRESHOLD] = 500.0
+	iPrecisions[MT_THRESHOLD] = 10.0
+	iInfo[MT_THRESHOLD] = "$INFO_MT_THRESHOLD"
+	
+	iRangeMin[THREADS] = 1.0
+	iRangeMax[THREADS] = 32.0
+	iPrecisions[THREADS] = 1.0
+	iInfo[THREADS] = "$INFO_THREADS"
 endfunction
 
 function ReadConfig()

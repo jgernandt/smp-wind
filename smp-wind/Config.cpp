@@ -32,7 +32,7 @@ constexpr const char* KEYSF[wind::Config::FLOAT_COUNT]{
 };
 
 constexpr int DEFAULTSI[wind::Config::INT_COUNT]{
-	100,
+	50,
 	4,
 };
 

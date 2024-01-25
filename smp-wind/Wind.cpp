@@ -105,8 +105,18 @@ void wind::Wind::onEvent(const hdt::PreStepEvent& e)
 void wind::Wind::init(const Config& config)
 {
 	m_config = &config;
+	updateThreadCount();
+}
 
-	if (int threads = m_config->geti(Config::THREADS); threads > 1) {
+void wind::Wind::updateThreadCount()
+{
+	int threads = std::min(m_config->geti(Config::THREADS), ThreadPool::MAX_THREADS);
+
+	if (m_threadPool && threads != m_threadPool->size() + 1) {
+		m_threadPool.reset();
+	}
+
+	if (threads > 1) {
 		m_threadPool = std::make_unique<ThreadPool>(threads - 1);
 	}
 }

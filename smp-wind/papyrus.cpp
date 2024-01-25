@@ -6,6 +6,7 @@ namespace wind
 {
 	extern Config g_config;
 	extern Config g_configDefault;
+	extern Wind g_wind;
 
 	static bool getBool(StaticFunctionTag*, SInt32 id)
 	{
@@ -85,6 +86,10 @@ namespace wind
 	{
 		if (id >= 0 && id < Config::INT_COUNT) {
 			g_config.set(id, static_cast<int>(i));
+		}
+
+		if (id == Config::THREADS) {
+			wind::g_wind.updateThreadCount();
 		}
 	}
 
