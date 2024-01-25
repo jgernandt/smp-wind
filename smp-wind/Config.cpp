@@ -32,11 +32,13 @@ constexpr const char* KEYSF[wind::Config::FLOAT_COUNT]{
 };
 
 constexpr int DEFAULTSI[wind::Config::INT_COUNT]{
-	500,
+	100,
+	4,
 };
 
 constexpr const char* KEYSI[wind::Config::INT_COUNT]{
 	"iMultithreadThreshold",
+	"iThreads",
 };
 
 constexpr const char* HEADER = "Wind";

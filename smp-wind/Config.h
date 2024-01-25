@@ -30,6 +30,7 @@ namespace wind
 		enum IntID : int
 		{
 			MULTITHREAD_THRESHOLD,
+			THREADS,
 
 			INT_COUNT
 		};

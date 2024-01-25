@@ -16,18 +16,22 @@ RelocAddr<Sky* (*)()> GetSky(0x001c2640);
 
 wind::Wind::~Wind()
 {
-	shutdown();
+	//we're never actually getting here
+	m_threadPool.reset();
 }
 
 void wind::Wind::onEvent(const hdt::PreStepEvent& e)
 {
 #ifdef LOG_TIMER
-	static float averageTime = 0.0f;
-	static float averageObjs = 0.0f;
-	static int steps = 0;
+	constexpr int NFRAMES = 120;
 
-	Timer<long long, std::micro> timer;
+	static std::vector<int> frameTimes(NFRAMES);
+	static std::vector<int> frameObjs(NFRAMES);
+	static int frame = 0;
+
+	Timer<int, std::micro> timer;
 #endif
+
 
 	assert(m_config);
 
@@ -35,27 +39,27 @@ void wind::Wind::onEvent(const hdt::PreStepEvent& e)
 	m_sky = GetSky();
 	if (m_sky && m_sky->mode == Sky::kFull && m_sky->windSpeed != 0.0f) {
 
-		m_currentDir = btVector3(std::cosf(m_sky->windDirection), std::sinf(m_sky->windDirection), 0.0f);
-		m_orthoDir = btVector3(std::cosf(m_sky->windDirection - 1.5708f), std::sinf(m_sky->windDirection - 1.5708f), 0.0f);
+		if (e.objects.size() > 0) {
 
-		//The overhead of waking up the threads is bigger than the time save, unless there are a lot of objects to process.
-		//This is likely to be situational, though.
-		//Potentially, this could be tuned automatically by alternating between the paths and favouring whichever
-		//is currently faster. Probably not worth the trouble, though.
-		if (e.objects.size() < m_config->geti(Config::MULTITHREAD_THRESHOLD)) {
-			//do it ourselves
-			for (int i = 0; i < e.objects.size(); i++) {
-				process(e.objects[i]);
+			m_currentDir = btVector3(std::cosf(m_sky->windDirection), std::sinf(m_sky->windDirection), 0.0f);
+			m_orthoDir = btVector3(std::cosf(m_sky->windDirection - 1.5708f), std::sinf(m_sky->windDirection - 1.5708f), 0.0f);
+
+			if (m_threadPool && e.objects.size() > m_config->geti(Config::MULTITHREAD_THRESHOLD)) {
+
+				m_objArr = &e.objects;
+				m_nextElement.store(0);
+
+				m_threadPool->release(this);
+
+				processThreadsafe();
+
+				m_threadPool->wait();
 			}
-		}
-		else {
-			//call the workers
-			m_objectArray = &e.objects;
-			m_arrayIndex.store(e.objects.size(), std::memory_order::release);
-			m_workerCount.store(WORKERS, std::memory_order::release);
-			m_startSignal.release(WORKERS);
-			m_stopSignal.acquire();
-			m_objectArray = nullptr;
+			else {
+				for (int i = 0; i < e.objects.size(); i++) {
+					process(e.objects[i]);
+				}
+			}
 		}
 	}
 	else {
@@ -65,13 +69,35 @@ void wind::Wind::onEvent(const hdt::PreStepEvent& e)
 	}
 
 #ifdef LOG_TIMER
-	averageTime = 0.75f * averageTime + 0.25f * timer.elapsed();
-	averageObjs = 0.75f * averageObjs + 0.25f * e.objects.size();
-	steps++;
+	frameObjs[frame] = e.objects.size();
+	frameTimes[frame++] = timer.elapsed();
 
-	if (steps % 120 == 0) {
-		_MESSAGE("Average time: %f", averageTime);
-		_MESSAGE("Average number of objects: %f", averageObjs);
+	if (frame == NFRAMES) {
+
+		frame = 0;
+
+		int meant = 0;
+		int maxt = 0;
+		int mint = std::numeric_limits<int>::max();
+		int maxo = 0;
+		int mino = std::numeric_limits<int>::max();
+		for (int i = 0; i < NFRAMES; i++) {
+			meant += frameTimes[i];
+			maxt = std::max(frameTimes[i], maxt);
+			mint = std::min(frameTimes[i], mint);
+			maxo = std::max(frameObjs[i], maxo);
+			mino = std::min(frameObjs[i], mino);
+		}
+		meant /= NFRAMES;
+
+		float var = 0.0f;
+		for (auto f : frameTimes) {
+			var += (f - meant) * (f - meant);
+		}
+		var /= NFRAMES;
+
+		_MESSAGE("Mean time (%d updates): %3d ± %-3d (%3d - %-3d) microseconds (%3d - %-3d collision objects)", 
+			NFRAMES, meant, (int)std::sqrt(var), mint, maxt, mino, maxo);
 	}
 #endif
 }
@@ -80,23 +106,8 @@ void wind::Wind::init(const Config& config)
 {
 	m_config = &config;
 
-	for (auto&& thread : m_workers) {
-		assert(thread.get_id() == std::thread::id());
-		thread = std::thread(&Wind::worker, this);
-	}
-}
-
-void wind::Wind::shutdown()
-{
-	//_DMESSAGE("We're never getting here, are we?");
-
-	m_objectArray = nullptr;
-	m_startSignal.release(WORKERS);
-
-	for (auto&& thread : m_workers) {
-		if (thread.joinable()) {
-			thread.join();
-		}
+	if (int threads = m_config->geti(Config::THREADS); threads > 1) {
+		m_threadPool = std::make_unique<ThreadPool>(threads - 1);
 	}
 }
 
@@ -186,27 +197,55 @@ void wind::Wind::process(btCollisionObject* object)
 	}
 }
 
-void wind::Wind::worker()
+void wind::Wind::processThreadsafe()
+{
+	assert(m_objArr);
+
+	for (int i = m_nextElement.fetch_add(1); i < m_objArr->size(); i = m_nextElement.fetch_add(1)) {
+		process((*m_objArr)[i]);
+	}
+}
+
+wind::Wind::ThreadPool::ThreadPool(int count) :
+	m_barrier(count + 1)
+{
+	assert(owner);
+	assert(count > 0 && count <= MAX_THREADS);
+
+	m_threads.resize(count);
+
+	for (auto&& thread : m_threads) {
+		thread = std::thread(&ThreadPool::worker, this);
+	}
+}
+
+wind::Wind::ThreadPool::~ThreadPool()
+{
+	release(nullptr);
+
+	for (auto&& thread : m_threads) {
+		if (thread.joinable()) {
+			thread.join();
+		}
+	}
+}
+
+void wind::Wind::ThreadPool::release(Wind* target)
+{
+	m_target = target;
+	m_signal.release(m_threads.size());
+}
+
+void wind::Wind::ThreadPool::worker()
 {
 	while (true) {
-		m_startSignal.acquire();
+		m_signal.acquire();
 
-		if (auto objArray = m_objectArray) {
-			//do work
-			int i = m_arrayIndex.fetch_sub(1, std::memory_order::acq_rel) - 1;
-			while (i >= 0) {
-				process((*objArray)[i]);
-				i = m_arrayIndex.fetch_sub(1, std::memory_order::acq_rel) - 1;
-			}
-
-			//done
-			if (m_workerCount.fetch_sub(1, std::memory_order::acq_rel) == 1) {
-				//we're the last to finish
-				m_stopSignal.release();
-			}
+		if (m_target) {
+			m_target->processThreadsafe();
+			m_barrier.arrive_and_wait();
 		}
 		else {
-			//terminate
 			break;
 		}
 	}

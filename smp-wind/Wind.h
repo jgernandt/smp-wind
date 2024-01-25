@@ -1,5 +1,9 @@
 #pragma once
 
+#include <barrier>
+#include <semaphore>
+#include <thread>
+
 #include "PluginAPI.h"
 
 #include "BulletDynamics/Dynamics/btDynamicsWorld.h"
@@ -49,12 +53,37 @@ static_assert(offsetof(Sky, mode) == 0x1bc);
 
 namespace wind
 {
-	constexpr int WORKERS = 8;
-
 	class Config;
 
 	class Wind final : public hdt::IPreStepListener
 	{
+	private:
+		class ThreadPool
+		{
+		public:
+			static constexpr int MAX_THREADS = 128;
+
+		public:
+			ThreadPool(int count);
+			ThreadPool(const ThreadPool&) = delete;
+
+			~ThreadPool();
+
+			ThreadPool& operator=(const ThreadPool&) = delete;
+
+			void release(Wind* target);
+			void wait() { m_barrier.arrive_and_wait(); }
+
+		private:
+			void worker();
+
+		private:
+			std::vector<std::thread> m_threads;
+			std::counting_semaphore<MAX_THREADS> m_signal{ 0 };
+			std::barrier<> m_barrier;
+			Wind* m_target{ nullptr };
+		};
+
 	public:
 		Wind() = default;
 		~Wind();
@@ -62,12 +91,11 @@ namespace wind
 		virtual void onEvent(const hdt::PreStepEvent& e) override;
 
 		void init(const Config& config);
-		void shutdown();
 
 	private:
 		btVector3 eval(const btVector3& at);
 		void process(btCollisionObject* object);
-		void worker();
+		void processThreadsafe();
 
 	private:
 		const Sky* m_sky{ nullptr };
@@ -77,11 +105,8 @@ namespace wind
 		btVector3 m_currentDir;
 		btVector3 m_orthoDir;
 
-		std::array<std::thread, WORKERS> m_workers;
-		std::counting_semaphore<WORKERS> m_startSignal{ 0 };
-		std::binary_semaphore m_stopSignal{ 0 };
-		std::atomic<int> m_workerCount{ -1 };
-		std::atomic<int> m_arrayIndex{ -1 };
-		const btAlignedObjectArray<btCollisionObject*>* m_objectArray{ nullptr };
+		std::unique_ptr<ThreadPool> m_threadPool;
+		const btAlignedObjectArray<btCollisionObject*>* m_objArr{ nullptr };
+		std::atomic<int> m_nextElement{ -1 };
 	};
 }
