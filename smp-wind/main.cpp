@@ -6,7 +6,7 @@
 #include "Wind.h"
 
 constexpr unsigned long VERSION_MAJOR{ 2 };
-constexpr unsigned long VERSION_MINOR{ 2 };
+constexpr unsigned long VERSION_MINOR{ 3 };
 constexpr unsigned long VERSION_PATCH{ 0 };
 constexpr unsigned long VERSION = (VERSION_MAJOR & 0xFF) << 24 | (VERSION_MINOR & 0xFF) << 16 | (VERSION_PATCH & 0xFF) << 8;
 
