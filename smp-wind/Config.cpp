@@ -53,7 +53,7 @@ constexpr const char* HDRSF[wind::Config::FLOAT_COUNT]{
 };
 
 constexpr int DEFAULTSI[wind::Config::INT_COUNT]{
-	50,
+	0,
 	4,
 };
 
