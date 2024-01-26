@@ -15,6 +15,15 @@ RelocAddr<Sky* (*)()> GetSky(0x001c2640);
 #endif
 
 
+static float randf(float min = 0.0f, float max = 1.0f)
+{
+	thread_local std::minstd_rand rng;
+
+	assert(max > min);
+	std::uniform_real_distribution<float> d(min, max);
+	return d(rng);
+}
+
 void wind::Wind::onEvent(const hdt::PreStepEvent& e)
 {
 	constexpr int NFRAMES = 120;
@@ -138,11 +147,7 @@ btVector3 wind::Wind::eval(const btVector3& at)
 		float angle = m_sky->windDirection + 0.5f * m_config->getf(Config::OSC02SPAN) * (std::cosf(phase02) + std::cosf(0.3101f * phase02));
 		btVector3 spread = m_config->getf(Config::OSC02FORCE) * btVector3(std::cosf(angle), std::sinf(angle), 0.0f);
 
-		//Fractions of a length unit is effectively noise (order of mm)
-		btVector3 noise = m_config->getf(Config::NOISE) * btVector3(
-			std::fmodf(10.0f * at[0], 2.0f) - std::copysignf(1.0f, at[0]),
-			std::fmodf(10.0f * at[1], 2.0f) - std::copysignf(1.0f, at[1]),
-			std::fmodf(10.0f * at[2], 2.0f) - std::copysignf(1.0f, at[2]));
+		btVector3 noise = m_config->getf(Config::NOISE) * btVector3(randf(-1.0f, 1.0f), randf(-1.0f, 1.0f), randf(-1.0f, 1.0f));
 
 		return m_config->getf(Config::FORCE) * speed * (base + spread + noise);
 	}
