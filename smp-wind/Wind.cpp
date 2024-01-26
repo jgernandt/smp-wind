@@ -31,7 +31,7 @@ void wind::Wind::onEvent(const hdt::PreStepEvent& e)
 	m_currentTime += e.timeStep;
 	m_sky = GetSky();
 	if (m_sky && m_sky->mode == Sky::kFull && m_sky->windSpeed != 0.0f) {
-
+		
 		if (e.objects.size() > 0) {
 
 			m_currentDir = btVector3(std::cosf(m_sky->windDirection), std::sinf(m_sky->windDirection), 0.0f);
@@ -122,15 +122,15 @@ btVector3 wind::Wind::eval(const btVector3& at)
 	float speed = (1.0f + m_config->getf(Config::HEIGHTFACTOR) * (1.0e-4f * at[2] + 1.4f)) * m_sky->windSpeed;
 
 	if (speed > 0.0f) {
-		//Spatial oscillation should have a period on the order of meters.
-		//Phase velocity in the wind direction increases with wind speed.
-		float U = 2.0e-3f * at.dot(m_currentDir) / speed;
-		float V = 4.0e-3f * at.dot(m_orthoDir);
-		float W = 2.0e-3f * at[2];
 
-		//High frequency implies high gust speed, so divide spatial phase shift by frequency
-		float phase01 = m_config->getf(Config::OSC01FREQ) * m_currentTime - U / m_config->getf(Config::OSC01FREQ) - V - W;
-		float phase02 = m_config->getf(Config::OSC02FREQ) * m_currentTime - U / m_config->getf(Config::OSC02FREQ) - V - W;
+		//phase velocity parallel to the wind should be consistent with speed
+		//largest speed in vanilla weathers is 1, which should correspond to something like 10-20 m/s (700-1400 units/s)
+		float U = at.dot(m_currentDir) / (1000.f * speed);
+		//phase velocity orthogonal to the wind is scaled arbitrarily
+		float V = 5.0e-3f * at.dot(m_orthoDir);
+
+		float phase01 = m_config->getf(Config::OSC01FREQ) * (m_currentTime - U - V);
+		float phase02 = m_config->getf(Config::OSC02FREQ) * (m_currentTime - U - V);
 
 		//Two different frequencies makes fluctuations less predictable
 		btVector3 base = (1.0f + 0.5f * m_config->getf(Config::OSC01FORCE) * (std::cosf(phase01) + std::cosf(0.2692f * phase01))) * m_currentDir;
