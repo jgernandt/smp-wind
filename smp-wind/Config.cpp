@@ -1,6 +1,9 @@
 #include "pch.h"
 #include "Config.h"
 
+constexpr const char* HDR_WIND = "Wind";
+constexpr const char* HDR_PERFORMANCE = "Performance";
+
 constexpr bool DEFAULTSB[wind::Config::BOOL_COUNT]{
 	false,
 	false,
@@ -9,6 +12,11 @@ constexpr bool DEFAULTSB[wind::Config::BOOL_COUNT]{
 constexpr const char* KEYSB[wind::Config::BOOL_COUNT]{
 	"bMassIndependent",
 	"bLogPerformance",
+};
+
+constexpr const char* HDRSB[wind::Config::BOOL_COUNT]{
+	HDR_WIND,
+	HDR_PERFORMANCE,
 };
 
 constexpr float DEFAULTSF[wind::Config::FLOAT_COUNT]{
@@ -33,6 +41,17 @@ constexpr const char* KEYSF[wind::Config::FLOAT_COUNT]{
 	"fHeightFactor",
 };
 
+constexpr const char* HDRSF[wind::Config::FLOAT_COUNT]{
+	HDR_WIND,
+	HDR_WIND,
+	HDR_WIND,
+	HDR_WIND,
+	HDR_WIND,
+	HDR_WIND,
+	HDR_WIND,
+	HDR_WIND,
+};
+
 constexpr int DEFAULTSI[wind::Config::INT_COUNT]{
 	50,
 	4,
@@ -43,7 +62,10 @@ constexpr const char* KEYSI[wind::Config::INT_COUNT]{
 	"iThreads",
 };
 
-constexpr const char* HEADER = "Wind";
+constexpr const char* HDRSI[wind::Config::INT_COUNT]{
+	HDR_PERFORMANCE,
+	HDR_PERFORMANCE,
+};
 
 wind::Config::Config()
 {
@@ -76,7 +98,7 @@ bool wind::Config::load(const std::filesystem::path& path)
 		if (std::filesystem::exists(path)) {
 			char buf[256];
 			for (int i = 0; i < BOOL_COUNT; i++) {
-				DWORD res = GetPrivateProfileString(HEADER, KEYSB[i], NULL, buf, sizeof(buf), m_path.string().c_str());
+				DWORD res = GetPrivateProfileString(HDRSB[i], KEYSB[i], NULL, buf, sizeof(buf), m_path.string().c_str());
 				if (res == 0) {
 					m_bools[i] = DEFAULTSB[i];
 				}
@@ -92,7 +114,7 @@ bool wind::Config::load(const std::filesystem::path& path)
 			}
 
 			for (int i = 0; i < FLOAT_COUNT; i++) {
-				DWORD res = GetPrivateProfileString(HEADER, KEYSF[i], NULL, buf, sizeof(buf), m_path.string().c_str());
+				DWORD res = GetPrivateProfileString(HDRSF[i], KEYSF[i], NULL, buf, sizeof(buf), m_path.string().c_str());
 				if (res == 0) {
 					m_floats[i] = DEFAULTSF[i];
 				}
@@ -110,7 +132,7 @@ bool wind::Config::load(const std::filesystem::path& path)
 				}
 			}
 			for (int i = 0; i < INT_COUNT; i++) {
-				DWORD res = GetPrivateProfileString(HEADER, KEYSI[i], NULL, buf, sizeof(buf), m_path.string().c_str());
+				DWORD res = GetPrivateProfileString(HDRSI[i], KEYSI[i], NULL, buf, sizeof(buf), m_path.string().c_str());
 				if (res == 0) {
 					m_ints[i] = DEFAULTSI[i];
 				}
@@ -185,7 +207,7 @@ void wind::Config::set(int id, bool b)
 
 	m_bools[id] = b;
 
-	WritePrivateProfileString(HEADER, KEYSB[id], b ? "1" : "0", m_path.string().c_str());
+	WritePrivateProfileString(HDRSB[id], KEYSB[id], b ? "1" : "0", m_path.string().c_str());
 }
 
 void wind::Config::set(int id, float f)
@@ -196,7 +218,7 @@ void wind::Config::set(int id, float f)
 
 	char buf[16];
 	snprintf(buf, sizeof(buf), "%f", m_floats[id]);
-	WritePrivateProfileString(HEADER, KEYSF[id], buf, m_path.string().c_str());
+	WritePrivateProfileString(HDRSF[id], KEYSF[id], buf, m_path.string().c_str());
 }
 
 void wind::Config::set(int id, int i)
@@ -207,5 +229,5 @@ void wind::Config::set(int id, int i)
 
 	char buf[16];
 	snprintf(buf, sizeof(buf), "%d", m_ints[id]);
-	WritePrivateProfileString(HEADER, KEYSI[id], buf, m_path.string().c_str());
+	WritePrivateProfileString(HDRSI[id], KEYSI[id], buf, m_path.string().c_str());
 }
